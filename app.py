@@ -12,17 +12,65 @@ st.set_page_config(page_title="Movie Recommender", page_icon="🎬", layout="wid
 # =============================
 # STYLES (minimal modern)
 # =============================
-st.markdown(
-    """
+st.markdown("""
 <style>
-.block-container { padding-top: 1rem; padding-bottom: 2rem; max-width: 1400px; }
-.small-muted { color:#6b7280; font-size: 0.92rem; }
-.movie-title { font-size: 0.9rem; line-height: 1.15rem; height: 2.3rem; overflow: hidden; }
-.card { border: 1px solid rgba(0,0,0,0.08); border-radius: 16px; padding: 14px; background: rgba(255,255,255,0.7); }
+
+/* Main app background */
+.stApp {
+    background: #ffffff;
+}
+
+/* Sidebar */
+section[data-testid="stSidebar"] {
+    background: #f8f9ff;
+}
+
+/* Titles */
+h1, h2, h3, h4 {
+    color: #222 !important;
+    font-weight: 700;
+}
+
+/* Search box */
+.stTextInput input {
+    background: #f4f6ff !important;
+    border-radius: 12px !important;
+    border: 1px solid #e0e3ff !important;
+    color: #111 !important;
+}
+
+/* Dropdown */
+.stSelectbox div[data-baseweb="select"] {
+    background: #f4f6ff !important;
+    border-radius: 12px !important;
+    border: 1px solid #e0e3ff !important;
+}
+
+/* Slider */
+.stSlider {
+    color: #7b61ff !important;
+}
+
+/* Movie cards glow */
+img {
+    border-radius: 16px !important;
+    transition: 0.3s;
+}
+img:hover {
+    transform: scale(1.05);
+}
+
+/* Cute divider line */
+hr {
+    border: none;
+    height: 2px;
+    background: linear-gradient(90deg,#ff9ad5,#7b61ff);
+}
+
 </style>
-""",
-    unsafe_allow_html=True,
-)
+""", unsafe_allow_html=True)
+
+
 
 # =============================
 # STATE + ROUTING (single-file pages)
@@ -76,16 +124,18 @@ def api_get_json(path: str, params: dict | None = None):
 
 def poster_grid(cards, cols=6, key_prefix="grid"):
     if not cards:
-        st.info("No movies to show.")
+        st.info("🍿 Nothing here yet… try another search!")
         return
 
     rows = (len(cards) + cols - 1) // cols
     idx = 0
+
     for r in range(rows):
         colset = st.columns(cols)
         for c in range(cols):
             if idx >= len(cards):
                 break
+
             m = cards[idx]
             idx += 1
 
@@ -94,20 +144,28 @@ def poster_grid(cards, cols=6, key_prefix="grid"):
             poster = m.get("poster_url")
 
             with colset[c]:
+                st.markdown("<div class='movie-card'>", unsafe_allow_html=True)
+
                 if poster:
                     st.image(poster, use_column_width=True)
                 else:
-                    st.write("🖼️ No poster")
+                    st.markdown(
+                        "<div style='height:270px;display:flex;align-items:center;justify-content:center;'>🖼️</div>",
+                        unsafe_allow_html=True
+                    )
 
-                if st.button("Open", key=f"{key_prefix}_{r}_{c}_{idx}_{tmdb_id}"):
+                if st.button("✨ Open", key=f"{key_prefix}_{r}_{c}_{idx}_{tmdb_id}"):
                     if tmdb_id:
                         goto_details(tmdb_id)
 
                 st.markdown(
-                    f"<div class='movie-title'>{title}</div>", unsafe_allow_html=True
+                    f"<div class='movie-title'>{title}</div>",
+                    unsafe_allow_html=True
                 )
 
+                st.markdown("</div>", unsafe_allow_html=True)
 
+# ⭐ Converts TF-IDF API response → poster cards
 def to_cards_from_tfidf_items(tfidf_items):
     cards = []
     for x in tfidf_items or []:
@@ -121,7 +179,6 @@ def to_cards_from_tfidf_items(tfidf_items):
                 }
             )
     return cards
-
 
 # =============================
 # IMPORTANT: Robust TMDB search parsing
